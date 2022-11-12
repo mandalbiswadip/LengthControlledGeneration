@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import os
-from collections import defaultdict
+import sys
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"]="6"
@@ -16,10 +16,9 @@ from dataset import CitationTextGenerationDataset, CitationTextGenerationDataset
 
 
 device = "cuda"
-
-
 max_input_length = 16384
 max_output_length = 1024
+
 
 def process_data_to_model_inputs(batch, special_tokens=['[Dominant]', '[Reference]'], length=None):
     # tokenize the inputs and labels
@@ -71,7 +70,7 @@ def process_data_to_model_inputs(batch, special_tokens=['[Dominant]', '[Referenc
     ]
     return batch
 
-path = "/home/bxm200000/models/dominant_only/led_generations/positional_length_control_v8_dominant_only/checkpoint-67500/"
+path = sys.argv[1]
 
 
 tokenizer = AutoTokenizer.from_pretrained(path)
@@ -85,32 +84,11 @@ model = LEDForConditionalGeneration.from_pretrained(
 model = model.to(device).half()
 model.eval()
 
-def get_citations(src):
-    """Get citations given source content"""
-    all_citations = []
-    for cite_data in src.split("[B_Reference]")[1:]:
-
-        all_citations.append(cite_data.split("</s>")[0].strip())
-
-    for cite_data in src.split("[B_Dominant]")[1:]:
-
-        all_citations.append(cite_data.split("</s>")[0].strip())
-        
-    for cite_data in src.split("[B_Mask]")[1:]:
-
-        all_citations.append(cite_data.split("</s>")[0].strip())
-    
-    return all_citations
-
-
 def get_sentence_token_count(sent):
     return tokenizer.tokenize(sent).__len__()
 
-
 def get_context(source):
     return source.split("\n\n")[0]
-
-
 
 def run_model(batch, model, length=None):
     processed_batch = process_data_to_model_inputs(
@@ -147,20 +125,31 @@ def run_length_controlled_prediction(
     test_data_list = [test_data]
     
     for batch in DataLoader(test_data_list, batch_size = 1, shuffle=False):
-        out, ta, seq_scores = run_model(
+        out, _, _ = run_model(
             batch, model,
             length=length
         )
         break
     return out[0]
 
-
+# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#                                                                    x
+#  source format                                                     x   
+#  related work context [MASK] related work context \n\n             x                                           x   
+#  repeat this for all the cited papar and append to the above text  x
+#       [B_Dominant] or [B_Referece]                                 x
+#       citation mark                                                x   
+#       </s> title                                                   x   
+#       | abstract of cited paper                                    x   
+# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 source = """A simple (and yet effective) baseline for zero-shot translation is pivoting that chain-translates, first to a pivot language, then to a target (Cohn and Lapata, 2007; Wu and Wang, 2007; Utiyama and Isahara, 2007) .\nDespite being a pipeline, pivoting gets better as the supervised models improve, which makes it a strong baseline in the zero-shot setting.\nCheng et al. (2017) proposed a joint pivoting learning strategy that leads to further improvements.\nLu et al. (2018) and Arivazhagan et al. (2018) proposed different techniques to obtain "neural interlingual" representations that are passed to the decoder.\n [Mask] \n\n [B_Dominant] Sestorain et al. (2018) </s> [E_Dominant] [B_Dominant] (He et al., 2016) </s> Dual Learning for Machine Translation | While neural machine translation (NMT) is making good progress in the past two years, tens of millions of bilingual sentence pairs are needed for its training. However, human labeling is very costly. To tackle this training data bottleneck, we develop a dual-learning mechanism, which can enable an NMT system to automatically learn from unlabeled data through a dual-learning game. This mechanism is inspired by the following observation: any machine translation task has a dual task, e.g., English-to-French translation (primal) versus French-to-English translation (dual); the primal and dual tasks can form a closed loop, and generate informative feedback signals to train the translation models, even if without the involvement of a human labeler. In the dual-learning mechanism, we use one agent to represent the model for the primal task and the other agent to represent the model for the dual task, then ask them to teach each other through a reinforcement learning process. Based on the feedback signals generated during this process (e.g., the languagemodel likelihood of the output of a model, and the reconstruction error of the original sentence after the primal and dual translations), we can iteratively update the two models until convergence (e.g., using the policy gradient methods). We call the corresponding approach to neural machine translation dual-NMT. Experiments show that dual-NMT works very well on English↔French translation; especially, by learning from monolingual data (with 10% bilingual data for warm start), it achieves a comparable accuracy to NMT trained from the full bilingual data for the French-to-English translation task. [E_Dominant]"""
 
 print("Input to model \n" + "*"*20 + "\n", source)
 
 print("generation of length 20", run_length_controlled_prediction(source, length=20))
+print("\n\n")
 print("generation of length 40", run_length_controlled_prediction(source, length=40))
+print("\n\n")
 print("generation of length 50", run_length_controlled_prediction(source, length=50))
 
