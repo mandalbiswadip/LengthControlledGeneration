@@ -1,5 +1,5 @@
-"""copied from huggingface transformers library.
-PLEASE FIND A BETTER WAY OTHER THAN COPYING THE WHOLE CODE
+"""
+adapted from huggingface transformers library.
 """
 import random
 import inspect

@@ -1,14 +1,7 @@
 import os
 import argparse
-import json
-import jsonlines
-from tqdm import tqdm
 import numpy as np
-import pandas as pd
 import torch
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
-from collections import OrderedDict
 from dataset import (
     CitationTextGenerationDatasetNoCitationType,
     CitationTextGenerationDataset,
@@ -19,12 +12,9 @@ from transformers import (
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
     AutoTokenizer,
-    AutoModelForSeq2SeqLM,
 )
 # from seq_trainer import SeqToSeqNew as Seq2SeqTrainer
-from paragraph_model import JointParagraphTagger
 import modelling_led
-import modelling_led_multitask
 
 # compute Rouge score during validation
 def compute_metrics(pred):
@@ -150,43 +140,13 @@ if __name__ == "__main__":
     argparser.add_argument('--distant_dataset', type=str)
     argparser.add_argument('--dev_dataset', type=str)
     argparser.add_argument('--pre_trained_model', type=str)
-    argparser.add_argument('--pre_trained_model_joint_tagger',
-                           dest='pre_trained_model_joint_tagger',
-                           action='store_true')
-    argparser.set_defaults(pre_trained_model_joint_tagger=False)
-    argparser.add_argument('--predict_length',
-                           dest='predict_length',
-                           action='store_true')
+
     argparser.set_defaults(predict_length=False)
     argparser.add_argument('--classification', dest='classification', action='store_true')
     argparser.set_defaults(classification=False)
 
-    argparser.add_argument('--generation_loss_only', dest='generation_loss_only', action='store_true')
-    argparser.set_defaults(generation_loss_only=False)
-
-
-    argparser.add_argument('--length_loss_only', dest='length_loss_only', action='store_true')
-    argparser.set_defaults(length_loss_only=False)
-
     argparser.add_argument('--no_citation_type', dest='no_citation_type', action='store_false')
     argparser.set_defaults(no_citation_type=True)
-
-    argparser.add_argument('--learnable_multitask_learning', dest='learnable_multitask_learning', action='store_true')
-    argparser.set_defaults(learnable_multitask_learning=False)
-
-    argparser.add_argument('--predict_log_length', dest='predict_log_length', action='store_true')
-    argparser.set_defaults(predict_log_length=False)
-
-    argparser.add_argument('--length_loss_coef', type=float, default=0.5, help="length_loss_coef")
-
-    argparser.add_argument(
-        '--length_schedule_sampling_prob_init', type=float, default=1.0, 
-        help="Schedule sampling probablity to select ground truth length as desired length!!"
-    )
-    argparser.add_argument(
-        '--length_schedule_sampling_decay_rate', type=float, default=1.0, 
-        help="decay rate for length_schedule_sampling_prob!!"
-    )
 
     argparser.add_argument('--dominant_only', dest='dominant_only', action='store_true')
     argparser.set_defaults(dominant_only=False)
@@ -203,7 +163,6 @@ if __name__ == "__main__":
         help="sinusodial embedding type")
     argparser.add_argument('--checkpoint', type=str, default="./")
     argparser.add_argument('--batch_size', type=int, default=1)
-    length_control_flag = True 
 
     args = argparser.parse_args()
     torch.manual_seed(12345) # pytorch random seed
@@ -283,15 +242,6 @@ if __name__ == "__main__":
 
     val_set = prepare_dataset(val_set)
     
-    #training_set = read_write_cached_dataset(args.train_dataset, ".train", load_dataset, [LEDRelatedWorkMLMDataset, tokenizer, args.train_dataset, ".train", True])
-    #val_set = read_write_cached_dataset(args.dev_dataset, ".dev", load_dataset, [LEDRelatedWorkMLMDataset, args.dev_dataset, ".dev", False])
-    
-    #training_set = read_write_cached_dataset(args.train_dataset, ".train", load_dataset, [CrossDocumentLMdataset, tokenizer, args.train_dataset, ".train", True])
-    #val_set = read_write_cached_dataset(args.dev_dataset, ".dev", load_dataset, [CrossDocumentLMdataset, tokenizer, args.dev_dataset, ".dev", False])
-    
-    #training_set = read_write_cached_dataset(args.train_dataset, ".train", load_dataset, [SimpleCrossDocumentLMdataset, tokenizer, args.train_dataset, ".train", True])
-    #val_set = read_write_cached_dataset(args.dev_dataset, ".dev", load_dataset, [SimpleCrossDocumentLMdataset, tokenizer, args.dev_dataset, ".dev", False])
-    
     training_args = Seq2SeqTrainingArguments(
         predict_with_generate=True,
         evaluation_strategy="steps",
@@ -314,45 +264,17 @@ if __name__ == "__main__":
     )
     
     def set_model_arguments(led_model, args):
-        if args.length_loss_only and args.generation_loss_only:
-            raise ValueError("arguments length_loss_only and generation_loss_only can't be true at the same time")
-        if not args.predict_length and args.predict_log_length:
-            raise ValueError("arguments predict_log_length can't be true when predict_length is false")
-        if args.length_loss_coef > 1.:
-            raise ValueError(f"length_loss_coef value should be [0,1] given {args.length_loss_coef}")
-        
         led_model.config.sinpostype = args.sinpostype
-        led_model.config.generation_loss_only = args.generation_loss_only
-        led_model.config.length_loss_only = args.length_loss_only
-        led_model.config.learnable_multitask_learning = args.learnable_multitask_learning
-        led_model.config.predict_log_length = args.predict_log_length
-        led_model.config.length_loss_coef = args.length_loss_coef
-        led_model.config.generation_loss_coef = 1 - args.length_loss_coef
-        led_model.config.length_schedule_sampling_prob_init= args.length_schedule_sampling_prob_init
-        led_model.config.length_schedule_sampling_prob = args.length_schedule_sampling_prob_init
-        led_model.config.length_schedule_sampling_decay_rate = args.length_schedule_sampling_decay_rate
-
         print(led_model.config)
         return led_model
 
     # load model + enable gradient checkpointing & disable cache for checkpointing
-    if args.predict_length:
-        led = modelling_led_multitask.LEDForConditionalGeneration.from_pretrained(args.repfile, gradient_checkpointing=True, use_cache=False)
-    else:
-        led = modelling_led.LEDForConditionalGeneration.from_pretrained(args.repfile, gradient_checkpointing=True, use_cache=False)
-    led = set_model_arguments(led, args)
-    print(f"length loss coefficient {led.config.length_loss_coef }")
-    print(f"generation loss coefficient {led.config.generation_loss_coef }")
-
-
-    if args.pre_trained_model is not None:
-        joint_tagger = JointParagraphTagger(args.repfile, len(tokenizer))
-        joint_tagger.load_state_dict(torch.load(
-            args.pre_trained_model)
+    led = modelling_led.LEDForConditionalGeneration.from_pretrained(
+        args.repfile, 
+        gradient_checkpointing=True, 
+        use_cache=False
         )
-        if hasattr(led, "led"):
-            led.led.encoder.load_state_dict(joint_tagger.bert.state_dict())
-
+    led = set_model_arguments(led, args)
 
     # set generate hyperparameters
     led.config.num_beams = 4
