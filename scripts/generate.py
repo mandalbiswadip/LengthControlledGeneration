@@ -161,6 +161,6 @@ source = """A simple (and yet effective) baseline for zero-shot translation is p
 print("Input to model \n" + "*"*20 + "\n", source)
 
 print("generation of length 20", run_length_controlled_prediction(source, length=20))
-print("generation of length 40", run_length_controlled_prediction(source, length=20))
-print("generation of length 50", run_length_controlled_prediction(source, length=20))
+print("generation of length 40", run_length_controlled_prediction(source, length=40))
+print("generation of length 50", run_length_controlled_prediction(source, length=50))
 
