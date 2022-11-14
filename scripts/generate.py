@@ -159,11 +159,12 @@ for citation in data["cited_papers"]:
     citation_type, citation_mark, title, abstract = citation["citation_type"], citation["citation_mark"], citation["title"], citation["abstract"]
     source += f"[B_{citation_type}] {citation_mark} </s> {title} | {abstract} [E_{citation_type}] "
 
+print("\n\n\n")
 print("Input to model \n" + "*"*20 + "\n", source)
 
-print("generation of length 20", run_length_controlled_prediction(source, length=20))
+print("generation of length 20: ", run_length_controlled_prediction(source, length=20))
 print("\n\n")
-print("generation of length 40", run_length_controlled_prediction(source, length=40))
+print("generation of length 40: ", run_length_controlled_prediction(source, length=40))
 print("\n\n")
-print("generation of length 50", run_length_controlled_prediction(source, length=50))
+print("generation of length 50: ", run_length_controlled_prediction(source, length=50))
 
