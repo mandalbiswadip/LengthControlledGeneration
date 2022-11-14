@@ -150,7 +150,9 @@ input_path = sys.argv[2]
 with open(path, "r") as f:
     data = json.load(f)
 
-source = f"{data["related_work_context"]} \n\n "
+related_work_context = data["related_work_context"]
+
+source = f"{related_work_context} \n\n "
 
 for citation in data["cited_papers"]:
     citation_type, citation_mark, title, abstract = citation["citation_type"], citation["citation_mark"], citation["title"], citation["abstract"]
