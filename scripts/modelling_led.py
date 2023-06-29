@@ -5,7 +5,6 @@ import random
 import inspect
 from traceback import print_tb
 from typing import Optional, Iterable
-from matplotlib.pyplot import axis
 
 import torch
 import torch.nn.functional as F

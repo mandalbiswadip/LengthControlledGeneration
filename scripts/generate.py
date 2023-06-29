@@ -75,9 +75,9 @@ path = sys.argv[1]
 
 
 tokenizer = AutoTokenizer.from_pretrained(path)
-special_tokens = ['<doc>','</doc>', '[BOS]', '[Mask]', '[Dominant]', '[Reference]', '[B_Dominant]',  '[E_Dominant]', '[B_Reference]', '[E_Reference]']
-additional_special_tokens = {'additional_special_tokens': special_tokens}
-tokenizer.add_special_tokens(additional_special_tokens)
+# special_tokens = ['<doc>','</doc>', '[BOS]', '[Mask]', '[Dominant]', '[Reference]', '[B_Dominant]',  '[E_Dominant]', '[B_Reference]', '[E_Reference]']
+# additional_special_tokens = {'additional_special_tokens': special_tokens}
+# tokenizer.add_special_tokens(additional_special_tokens)
 
 model = LEDForConditionalGeneration.from_pretrained(
     path
