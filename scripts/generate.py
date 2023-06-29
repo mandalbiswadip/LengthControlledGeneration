@@ -6,7 +6,7 @@ import sys
 import json
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"]="6"
+# os.environ["CUDA_VISIBLE_DEVICES"]="6"
 
 import torch
 from datasets import load_dataset, load_metric
