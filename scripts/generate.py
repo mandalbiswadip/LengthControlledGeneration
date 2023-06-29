@@ -82,6 +82,7 @@ tokenizer = AutoTokenizer.from_pretrained(path)
 model = LEDForConditionalGeneration.from_pretrained(
     path
 )
+model.config.sinpostype = "absolute"
 model = model.to(device).half()
 model.eval()
 
