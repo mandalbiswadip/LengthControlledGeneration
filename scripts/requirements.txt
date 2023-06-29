@@ -2,3 +2,4 @@ nltk
 torch
 datasets
 transformers
+sklearn

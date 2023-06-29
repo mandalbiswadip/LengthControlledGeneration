@@ -8,10 +8,10 @@ from util import *
 
 class CitationTextGenerationDataset(Dataset):
     def __init__(self, path_name: str, tokenizer, train=True, MAX_SENT_LEN=9999,
-                 related_work_path='/home/data/XiangciLi/20200705v1/acl/related_work.jsonl',
-                 cited_metadata_path='/home/data/XiangciLi/20200705v1/acl/cited_metadata.jsonl',
-                 cited_paper_path="/home/data/XiangciLi/20200705v1/acl/cited_pdf_parses.jsonl",
-                 citing_paper_path="/home/data/XiangciLi/20200705v1/acl/pdf_parses.jsonl",
+                 related_work_path='/home/data/20200705v1/acl/related_work.jsonl',
+                 cited_metadata_path='/home/data/20200705v1/acl/cited_metadata.jsonl',
+                 cited_paper_path="/home/data/20200705v1/acl/cited_pdf_parses.jsonl",
+                 citing_paper_path="/home/data/20200705v1/acl/pdf_parses.jsonl",
                  include_intro=True,
                  include_conclusion=False,
                  conclusion_sections=None,
@@ -294,10 +294,10 @@ class CitationTextGenerationDataset(Dataset):
 
 class CitationTextGenerationDatasetNoCitationType(Dataset):
     def __init__(self, path_name: str, tokenizer, train=True, MAX_SENT_LEN=9999,
-                 related_work_path='/home/data/XiangciLi/20200705v1/acl/related_work.jsonl',
-                 cited_metadata_path='/home/data/XiangciLi/20200705v1/acl/cited_metadata.jsonl',
-                 cited_paper_path="/home/data/XiangciLi/20200705v1/acl/cited_pdf_parses.jsonl",
-                 citing_paper_path="/home/data/XiangciLi/20200705v1/acl/pdf_parses.jsonl",
+                 related_work_path='/home/data/20200705v1/acl/related_work.jsonl',
+                 cited_metadata_path='/home/data/20200705v1/acl/cited_metadata.jsonl',
+                 cited_paper_path="/home/data/20200705v1/acl/cited_pdf_parses.jsonl",
+                 citing_paper_path="/home/data/20200705v1/acl/pdf_parses.jsonl",
                  include_intro=True,
                  include_conclusion=False,
                  conclusion_sections=None,

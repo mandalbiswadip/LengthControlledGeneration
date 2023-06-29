@@ -145,9 +145,6 @@ if __name__ == "__main__":
                            dest='pre_trained_model_joint_tagger',
                            action='store_true')
     argparser.set_defaults(pre_trained_model_joint_tagger=False)
-    # /home/data/XiangciLi/20200705v1/acl/selected_related_work.jsonl
-    # /home/data/XiangciLi/20200705v1/cs/related_works_year.jsonl
-    # "/home/data/XiangciLi/20200705v1/cs/related_works_year.jsonl"
     #argparser.add_argument('--lr', type=float, default=1e-4, help="Learning rate")
     argparser.add_argument('--epoch', type=int, default=3, help="Training epoch")
     argparser.add_argument('--max_input_length', type=int, default=16384) #1024
