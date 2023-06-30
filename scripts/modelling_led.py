@@ -1334,6 +1334,7 @@ class LEDDecoder(LEDPreTrainedModel):
             embedding_dim=config.d_model,
             padding_idx=self.padding_idx,
             init_size=self.max_target_positions + 1 + self.padding_idx,
+            sinpostype='absolute',
         )
 
 
